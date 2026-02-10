@@ -2,19 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Will You Be My Valentine? 💕</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
             background: #000;
+            touch-action: manipulation;
         }
 
         .photo-container {
@@ -51,16 +53,17 @@
 
         .clickable-area {
             position: absolute;
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             cursor: pointer;
             transition: all 0.3s ease;
             animation: pulse 2s infinite;
             z-index: 3;
+            background: rgba(255, 105, 180, 0.2);
         }
 
-        .clickable-area:hover {
+        .clickable-area:active {
             transform: scale(1.2);
         }
 
@@ -77,18 +80,22 @@
             position: absolute;
             background: rgba(255, 105, 180, 0.9);
             color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 16px;
             pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s;
             white-space: nowrap;
             z-index: 4;
+            animation: hintBounce 2s infinite;
         }
 
-        .clickable-area:hover + .hint {
-            opacity: 1;
+        @keyframes hintBounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
         }
 
         .popup-overlay {
@@ -116,12 +123,14 @@
 
         .popup {
             background: linear-gradient(135deg, #ff6b9d 0%, #c06c84 100%);
-            padding: 50px 60px;
+            padding: 40px 30px;
             border-radius: 30px;
             text-align: center;
             box-shadow: 0 20px 60px rgba(255, 105, 180, 0.5);
             animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
             max-width: 90vw;
+            max-height: 90vh;
+            overflow: visible;
         }
 
         @keyframes popIn {
@@ -137,7 +146,7 @@
 
         .popup h1 {
             color: white;
-            font-size: 2.5em;
+            font-size: 1.8em;
             margin-bottom: 30px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
         }
@@ -156,22 +165,24 @@
 
         .button-container {
             display: flex;
-            gap: 20px;
+            gap: 15px;
             justify-content: center;
             margin-top: 30px;
             position: relative;
-            height: 60px;
+            min-height: 80px;
+            flex-wrap: wrap;
         }
 
         .btn {
-            padding: 15px 40px;
-            font-size: 1.2em;
+            padding: 15px 35px;
+            font-size: 1.1em;
             border: none;
             border-radius: 50px;
             cursor: pointer;
             font-weight: bold;
             transition: all 0.3s ease;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            touch-action: manipulation;
         }
 
         .btn-yes {
@@ -179,7 +190,7 @@
             color: #ff6b9d;
         }
 
-        .btn-yes:hover {
+        .btn-yes:active {
             transform: scale(1.1);
             box-shadow: 0 8px 25px rgba(255,255,255,0.3);
         }
@@ -188,7 +199,7 @@
             background: #f0f0f0;
             color: #666;
             position: absolute;
-            transition: all 0.1s ease;
+            transition: all 0.2s ease;
         }
 
         .celebration {
@@ -224,7 +235,7 @@
         .success-message {
             display: none;
             color: white;
-            font-size: 2em;
+            font-size: 1.5em;
             margin-top: 20px;
             animation: fadeIn 0.5s ease-in-out;
         }
@@ -235,36 +246,58 @@
 
         @media (max-width: 768px) {
             .popup {
-                padding: 40px 30px;
+                padding: 35px 25px;
             }
             .popup h1 {
-                font-size: 1.8em;
+                font-size: 1.5em;
             }
             .btn {
                 padding: 12px 30px;
                 font-size: 1em;
             }
+            .clickable-area {
+                width: 80px;
+                height: 80px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .popup h1 {
+                font-size: 1.3em;
+                margin-bottom: 20px;
+            }
+            .popup .hearts {
+                font-size: 2.5em;
+            }
+            .btn {
+                padding: 10px 25px;
+                font-size: 0.9em;
+            }
+            .hint {
+                font-size: 14px;
+                padding: 8px 16px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Photo 1 -->
+   <!-- Photo 1 -->
     <div class="photo-container active" id="photo1">
-        <img src="../1.jpeg" alt="Photo 1">
+        <img src="1.jpeg" alt="Photo 1">
         <div class="clickable-area" id="click1" style="top: 35%; left: 35%;"></div>
         <div class="hint" style="top: 32%; left: 40%;">Click here! 👆</div>
     </div>
 
     <!-- Photo 2 -->
     <div class="photo-container" id="photo2">
-        <img src="../2.jpeg" alt="Photo 2">
+        <img src="2.jpeg" alt="Photo 2">
         <div class="clickable-area" id="click2" style="top: 28%; left: 48%;"></div>
         <div class="hint" style="top: 25%; left: 53%;">Now here! 💕</div>
     </div>
 
     <!-- Photo 3 -->
     <div class="photo-container" id="photo3">
-        <img src="../3.jpeg" alt="Photo 3">
+        <img src="3.jpeg" alt="Photo 3">
         <div class="clickable-area" id="click3" style="top: 40%; left: 45%;"></div>
         <div class="hint" style="top: 37%; left: 50%;">One more! 😊</div>
     </div>
@@ -291,6 +324,16 @@
         let currentPhoto = 1;
         const totalPhotos = 3;
         let isTransitioning = false;
+
+        // Prevent zoom on double-tap for iOS
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
 
         // Click handlers for photos
         document.getElementById('click1').addEventListener('click', (e) => {
@@ -362,34 +405,57 @@
             document.getElementById('popupOverlay').classList.add('show');
         }
 
-        // No button runs away
+        // No button runs away - works on both desktop and mobile
         const btnNo = document.getElementById('btnNo');
         const buttonContainer = document.getElementById('buttonContainer');
+        let noButtonMoves = 0;
 
+        // Desktop: hover
         btnNo.addEventListener('mouseenter', () => {
             moveNoButton();
         });
 
+        // Mobile: touchstart (fires when finger touches)
         btnNo.addEventListener('touchstart', (e) => {
             e.preventDefault();
             moveNoButton();
         });
 
+        // Mobile: click (fires when trying to tap)
+        btnNo.addEventListener('click', (e) => {
+            e.preventDefault();
+            moveNoButton();
+        });
+
         function moveNoButton() {
+            noButtonMoves++;
             const containerRect = buttonContainer.getBoundingClientRect();
             const btnRect = btnNo.getBoundingClientRect();
             
             // Calculate random position within the popup but avoiding the Yes button
             const maxX = containerRect.width - btnRect.width;
-            const maxY = 200; // Allow vertical movement too
+            const maxY = 250; // Allow more vertical movement
             
             let newX, newY;
+            let attempts = 0;
             do {
                 newX = Math.random() * maxX - (maxX / 2);
                 newY = (Math.random() - 0.5) * maxY;
-            } while (Math.abs(newX) < 100); // Keep it away from center
+                attempts++;
+            } while (Math.abs(newX) < 80 && attempts < 10); // Keep it away from center
             
             btnNo.style.transform = `translate(${newX}px, ${newY}px)`;
+            
+            // Add haptic feedback on mobile if supported
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+
+            // After a few moves, make the Yes button bigger to encourage clicking it
+            if (noButtonMoves >= 3) {
+                const btnYes = document.getElementById('btnYes');
+                btnYes.style.transform = 'scale(1.2)';
+            }
         }
 
         // Yes button celebration
@@ -398,6 +464,11 @@
         });
 
         function celebrate() {
+            // Haptic feedback
+            if (navigator.vibrate) {
+                navigator.vibrate([100, 50, 100, 50, 100]);
+            }
+
             // Hide buttons and show success message
             document.getElementById('buttonContainer').style.display = 'none';
             document.getElementById('successMessage').classList.add('show');
