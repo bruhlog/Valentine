@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Will You Be My Valentine? 💕</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .photo-container {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .photo-container.active {
+            opacity: 1;
+            z-index: 2;
+        }
+
+        .photo-container.zooming {
+            z-index: 3;
+        }
+
+        .photo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center center;
+        }
+
+        .photo-container.zoom-in img {
+            transform: scale(3);
+        }
+
+        .clickable-area {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+            z-index: 3;
+        }
+
+        .clickable-area:hover {
+            transform: scale(1.2);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(255, 105, 180, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 20px rgba(255, 105, 180, 0);
+            }
+        }
+
+        .hint {
+            position: absolute;
+            background: rgba(255, 105, 180, 0.9);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+            z-index: 4;
+        }
+
+        .clickable-area:hover + .hint {
+            opacity: 1;
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .popup-overlay.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .popup {
+            background: linear-gradient(135deg, #ff6b9d 0%, #c06c84 100%);
+            padding: 50px 60px;
+            border-radius: 30px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(255, 105, 180, 0.5);
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            max-width: 90vw;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .popup h1 {
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .popup .hearts {
+            font-size: 3em;
+            margin-bottom: 20px;
+            animation: heartbeat 1.5s infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            10%, 30% { transform: scale(1.1); }
+            20%, 40% { transform: scale(1); }
+        }
+
+        .button-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+            position: relative;
+            height: 60px;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-yes {
+            background: #fff;
+            color: #ff6b9d;
+        }
+
+        .btn-yes:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(255,255,255,0.3);
+        }
+
+        .btn-no {
+            background: #f0f0f0;
+            color: #666;
+            position: absolute;
+            transition: all 0.1s ease;
+        }
+
+        .celebration {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .celebration.show {
+            display: block;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ff6b9d;
+            animation: confetti-fall 3s linear;
+        }
+
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .success-message {
+            display: none;
+            color: white;
+            font-size: 2em;
+            margin-top: 20px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .popup {
+                padding: 40px 30px;
+            }
+            .popup h1 {
+                font-size: 1.8em;
+            }
+            .btn {
+                padding: 12px 30px;
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Photo 1 -->
+    <div class="photo-container active" id="photo1">
+        <img src="../1.jpeg" alt="Photo 1">
+        <div class="clickable-area" id="click1" style="top: 35%; left: 35%;"></div>
+        <div class="hint" style="top: 32%; left: 40%;">Click here! 👆</div>
+    </div>
+
+    <!-- Photo 2 -->
+    <div class="photo-container" id="photo2">
+        <img src="../2.jpeg" alt="Photo 2">
+        <div class="clickable-area" id="click2" style="top: 28%; left: 48%;"></div>
+        <div class="hint" style="top: 25%; left: 53%;">Now here! 💕</div>
+    </div>
+
+    <!-- Photo 3 -->
+    <div class="photo-container" id="photo3">
+        <img src="../3.jpeg" alt="Photo 3">
+        <div class="clickable-area" id="click3" style="top: 40%; left: 45%;"></div>
+        <div class="hint" style="top: 37%; left: 50%;">One more! 😊</div>
+    </div>
+
+    <!-- Valentine Popup -->
+    <div class="popup-overlay" id="popupOverlay">
+        <div class="popup">
+            <div class="hearts">💕 💖 💕</div>
+            <h1>Will You Be My Valentine?</h1>
+            <div class="button-container" id="buttonContainer">
+                <button class="btn btn-yes" id="btnYes">Yes! 💗</button>
+                <button class="btn btn-no" id="btnNo">No</button>
+            </div>
+            <div class="success-message" id="successMessage">
+                🎉 Yay! You made me the happiest! 🎉
+            </div>
+        </div>
+    </div>
+
+    <!-- Celebration Effect -->
+    <div class="celebration" id="celebration"></div>
+
+    <script>
+        let currentPhoto = 1;
+        const totalPhotos = 3;
+        let isTransitioning = false;
+
+        // Click handlers for photos
+        document.getElementById('click1').addEventListener('click', (e) => {
+            if (!isTransitioning) {
+                zoomAndTransition(1, 2, e);
+            }
+        });
+
+        document.getElementById('click2').addEventListener('click', (e) => {
+            if (!isTransitioning) {
+                zoomAndTransition(2, 3, e);
+            }
+        });
+
+        document.getElementById('click3').addEventListener('click', (e) => {
+            if (!isTransitioning) {
+                zoomAndTransition(3, null, e);
+            }
+        });
+
+        function zoomAndTransition(fromPhoto, toPhoto, event) {
+            isTransitioning = true;
+            const currentContainer = document.getElementById(`photo${fromPhoto}`);
+            const img = currentContainer.querySelector('img');
+            const clickArea = event.currentTarget;
+            
+            // Calculate the click position relative to the image
+            const rect = clickArea.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            const imgRect = img.getBoundingClientRect();
+            const percentX = ((centerX - imgRect.left) / imgRect.width) * 100;
+            const percentY = ((centerY - imgRect.top) / imgRect.height) * 100;
+            
+            // Set transform origin to the clicked point
+            img.style.transformOrigin = `${percentX}% ${percentY}%`;
+            
+            // Add zoom class to trigger the zoom effect
+            currentContainer.classList.add('zooming');
+            currentContainer.classList.add('zoom-in');
+            
+            // After zoom completes, transition to next photo or show popup
+            setTimeout(() => {
+                if (toPhoto) {
+                    // Transition to next photo
+                    currentContainer.classList.remove('active');
+                    currentContainer.classList.remove('zoom-in');
+                    currentContainer.classList.remove('zooming');
+                    
+                    const nextContainer = document.getElementById(`photo${toPhoto}`);
+                    nextContainer.classList.add('active');
+                    
+                    currentPhoto = toPhoto;
+                    
+                    // Reset transform origin for next image
+                    img.style.transformOrigin = 'center center';
+                    
+                    isTransitioning = false;
+                } else {
+                    // Show popup after last photo
+                    showPopup();
+                    isTransitioning = false;
+                }
+            }, 1200); // Match the transition duration
+        }
+
+        function showPopup() {
+            document.getElementById('popupOverlay').classList.add('show');
+        }
+
+        // No button runs away
+        const btnNo = document.getElementById('btnNo');
+        const buttonContainer = document.getElementById('buttonContainer');
+
+        btnNo.addEventListener('mouseenter', () => {
+            moveNoButton();
+        });
+
+        btnNo.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            moveNoButton();
+        });
+
+        function moveNoButton() {
+            const containerRect = buttonContainer.getBoundingClientRect();
+            const btnRect = btnNo.getBoundingClientRect();
+            
+            // Calculate random position within the popup but avoiding the Yes button
+            const maxX = containerRect.width - btnRect.width;
+            const maxY = 200; // Allow vertical movement too
+            
+            let newX, newY;
+            do {
+                newX = Math.random() * maxX - (maxX / 2);
+                newY = (Math.random() - 0.5) * maxY;
+            } while (Math.abs(newX) < 100); // Keep it away from center
+            
+            btnNo.style.transform = `translate(${newX}px, ${newY}px)`;
+        }
+
+        // Yes button celebration
+        document.getElementById('btnYes').addEventListener('click', () => {
+            celebrate();
+        });
+
+        function celebrate() {
+            // Hide buttons and show success message
+            document.getElementById('buttonContainer').style.display = 'none';
+            document.getElementById('successMessage').classList.add('show');
+            
+            // Create confetti
+            const celebration = document.getElementById('celebration');
+            celebration.classList.add('show');
+            
+            const colors = ['#ff6b9d', '#c06c84', '#ffd700', '#ff1493', '#ff69b4'];
+            
+            for (let i = 0; i < 100; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                    celebration.appendChild(confetti);
+                    
+                    setTimeout(() => confetti.remove(), 3000);
+                }, i * 30);
+            }
+        }
+    </script>
+</body>
+</html>
