@@ -60,7 +60,12 @@
             border-radius: 10px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             cursor: pointer;
-            transition: transform 0.2s ease;
+            transition: transform 0.2s ease, opacity 0.5s ease;
+        }
+
+        .envelope.disappear {
+            opacity: 0;
+            pointer-events: none;
         }
 
         .envelope:active {
@@ -151,6 +156,7 @@
             z-index: 10;
             font-weight: 600;
             box-shadow: 0 8px 25px rgba(255, 107, 157, 0.4);
+            transition: opacity 0.3s ease;
         }
 
         @keyframes bounce {
@@ -195,6 +201,11 @@
             z-index: 10;
             transition: all 0.3s ease;
             user-select: none;
+            pointer-events: auto;
+        }
+
+        .floating-heart.collected {
+            pointer-events: none;
         }
 
         .floating-heart:active {
@@ -569,10 +580,16 @@
             setTimeout(() => {
                 photo1Img.classList.add('show');
                 
-                // Transition to next photo
+                // Make envelope disappear after photo is visible
                 setTimeout(() => {
-                    transitionToPhoto(2);
-                }, 2500);
+                    envelope.classList.add('disappear');
+                    tapHint.style.display = 'none';
+                    
+                    // Transition to next photo
+                    setTimeout(() => {
+                        transitionToPhoto(2);
+                    }, 1500);
+                }, 1000);
             }, 700);
         }
 
@@ -582,39 +599,67 @@
 
         function initHeartCollector() {
             const container = document.getElementById('floatingHeartsContainer');
+            container.innerHTML = ''; // Clear any existing hearts
+            heartsCollected = 0; // Reset counter
+            document.getElementById('heartCount').textContent = '0/7';
+            
             const heartEmojis = ['💕', '💖', '💗', '💓', '💝', '💘', '❤️'];
             
             for (let i = 0; i < totalHearts; i++) {
                 const heart = document.createElement('div');
                 heart.className = 'floating-heart';
                 heart.textContent = heartEmojis[i];
-                heart.style.left = Math.random() * 80 + 10 + '%';
-                heart.style.top = Math.random() * 60 + 20 + '%';
+                heart.dataset.heartId = i; // Add unique ID
+                
+                // Ensure hearts don't overlap with counter or instruction
+                let left, top;
+                do {
+                    left = Math.random() * 80 + 10;
+                    top = Math.random() * 60 + 20;
+                } while (
+                    (top < 15 && left > 30 && left < 70) || // Avoid counter area at top
+                    (top > 80 && left > 30 && left < 70)    // Avoid instruction area at bottom
+                );
+                
+                heart.style.left = left + '%';
+                heart.style.top = top + '%';
                 heart.style.animationDelay = Math.random() * 2 + 's';
                 
-                heart.addEventListener('click', () => collectHeart(heart));
-                heart.addEventListener('touchstart', (e) => {
+                // Use both click and touchstart for better mobile support
+                heart.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    collectHeart(this);
+                });
+                
+                heart.addEventListener('touchstart', function(e) {
                     e.preventDefault();
-                    collectHeart(heart);
+                    e.stopPropagation();
+                    collectHeart(this);
                 });
                 
                 container.appendChild(heart);
             }
         }
 
-        function collectHeart(heart) {
-            if (heart.classList.contains('collected')) return;
+        function collectHeart(heartElement) {
+            // Check if already collected
+            if (heartElement.classList.contains('collected')) return;
             
-            heart.classList.add('collected');
+            // Mark as collected immediately
+            heartElement.classList.add('collected');
             heartsCollected++;
             
+            console.log(`Heart collected! Total: ${heartsCollected}/${totalHearts}`); // Debug
+            
             // Animate heart collection
-            heart.style.animation = 'none';
-            heart.style.transform = 'scale(2)';
-            heart.style.opacity = '0';
+            heartElement.style.animation = 'none';
+            heartElement.style.transform = 'scale(2)';
+            heartElement.style.opacity = '0';
+            heartElement.style.pointerEvents = 'none';
             
             if (navigator.vibrate) navigator.vibrate(50);
             
+            // Update counter
             document.getElementById('heartCount').textContent = `${heartsCollected}/${totalHearts}`;
             
             // Update photo reveal
@@ -623,7 +668,9 @@
             const brightness = 0.5 + (heartsCollected / totalHearts) * 0.5;
             photo2.querySelector('img').style.filter = `blur(${blurAmount}px) brightness(${brightness})`;
             
+            // Check if all hearts collected
             if (heartsCollected === totalHearts) {
+                console.log('All hearts collected! Transitioning...'); // Debug
                 setTimeout(() => {
                     photo2.classList.add('revealing');
                     setTimeout(() => {
@@ -643,10 +690,17 @@
             canvas = document.getElementById('heartCanvas');
             ctx = canvas.getContext('2d');
             
+            // Reset progress
+            traceProgress = 0;
+            document.getElementById('progressFill').style.width = '0%';
+            
             // Set canvas size
             const size = Math.min(window.innerWidth, window.innerHeight) * 0.6;
             canvas.width = size;
             canvas.height = size;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             // Draw heart outline
             drawHeartOutline();
@@ -692,6 +746,7 @@
         }
 
         function generateHeartPath() {
+            heartPath.length = 0; // Clear existing path
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2.5;
             const size = canvas.width / 4;
@@ -730,7 +785,7 @@
             // Check if near heart path
             const nearPath = heartPath.some(point => {
                 const distance = Math.sqrt(Math.pow(point.x - pos.x, 2) + Math.pow(point.y - pos.y, 2));
-                return distance < 30;
+                return distance < 40;
             });
             
             if (nearPath) {
